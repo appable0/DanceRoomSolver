@@ -1,0 +1,10 @@
+{
+  "name": "DanceRoomSolver",
+  "description": "Does the Dance Room in the Mirrorverse in Hypixel Skyblock for you.",
+  "creator": "appable",
+  "version": "1.0",
+  "entry": "index.js",
+  "requires": [
+    "PogData"
+  ]
+}
