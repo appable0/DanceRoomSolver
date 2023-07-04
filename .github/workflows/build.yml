@@ -16,19 +16,13 @@ jobs:
       - name: Get repository name
         id: repo_name
         run: echo "repo_name=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
-
-      - name: Get version number from metadata.json
-        id: version
-        run: echo "version=$(jq -r .version metadata.json)" >> $GITHUB_ENV
         
-      - name: Create build artifact
-        run: |
-          zip -r "${{ env.repo_name }}.zip" \
-            $(git ls-files | grep -v -e '\.gitignore' -e '\.git/') \
-            metadata.json
-
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: "${{ env.repo_name }}-${{ env.version }}"
-          path: "${{ env.repo_name }}.zip"
+          name: "${{ env.repo_name }}"
+          path: |
+            ./
+            !.git/
+            !.github/
+            !.gitignore

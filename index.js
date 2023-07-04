@@ -1,7 +1,7 @@
 /// <reference types="../CTAutocomplete" />
 
 import PogObject from "../PogData"
-let settings = new PogObject("DanceRoomSolver", { firstTime: true }, "settings.json")
+let settings = new PogObject("DanceRoomSolver", { firstTime: true, volume: 1.0, recordVolume: 1.0 }, "settings.json")
 
 // Expose mouse click method click
 let clickMouseMethod = Client.getMinecraft().class.getDeclaredMethod("func_147116_af") 
@@ -20,6 +20,8 @@ const pitchList = [0.523809552192688, 1.047619104385376, 0.6984127163887024, 0.8
 const completePitch = 0.7460317611694336
 const jumpDelay = 500
 const punchDelay = 800
+
+const SoundCategory = Java.type("net.minecraft.client.audio.SoundCategory")
 
 // Blocks
 const Blocks = Java.type("net.minecraft.init.Blocks")
@@ -80,7 +82,7 @@ const toggleGuardBlocks = (active) => {
   }
 }
 
-// Manage state for when solver is inactive
+// Manage state for when solver is activated or inactived
 const setInactive = () => {
   isActive = false
   beats = 0
@@ -88,6 +90,20 @@ const setInactive = () => {
   setKeyState(KeyBindings.Sneak, false)
   setKeyState(KeyBindings.Jump, false)
   toggleGuardBlocks(false)
+  Client.getSettings().getSettings().func_151439_a(SoundCategory.MASTER, settings.volume)
+}
+
+const setActive = () => {
+  settings.volume = Client.getSettings().getSettings().func_151438_a(SoundCategory.MASTER)
+  if (settings.volume == 0) {
+    ChatLib.chat("&e&oTemporarily turning volume on because your volume was off!")
+    Client.getSettings().getSettings().func_151439_a(SoundCategory.MASTER, 0.01)
+  }
+  settings.save()
+  isActive = true
+  setRotation()
+  toggleGuardBlocks(true)
+  doMove(0)
 }
 
 // Movement logic defined by the beat
@@ -161,10 +177,7 @@ register("renderTitle", (title, subtitle, event) => {
   if (subtitle != "§bMove!§r") return
   if (!isActive) {
     ChatLib.chat("&b&lAmbient &7» &bDance Room Solver Enabled!")
-    setRotation()
-    toggleGuardBlocks(true)
-    isActive = true
-    doMove(0)
+    setActive()
   }
 })
 
@@ -182,7 +195,7 @@ register("soundPlay", (position, name, vol, pitch) => {
   if (name == "random.burp") {
     ChatLib.chat("&b&lAmbient &7» &cFailed! Toggling off.")
     setInactive()
-  } else if (name == "note.bassattack") {
+  } else if (name == "note.bassattack" && vol == 1.0) {
     if (pitchList.includes(pitch)) {
       beats++
       doMove(beats)
