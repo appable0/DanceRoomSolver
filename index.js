@@ -72,23 +72,6 @@ const setRotation = () => {
   Player.getPlayer().func_70080_a(Player.getX(), Player.getY(), Player.getZ(), 90, 90)
 }
 
-// Set guard blocks to prevent solver from walking too far
-// Guard blocks broke in 11/2025.
-const toggleGuardBlocks = (active) => {
-//  const world = World.getWorld()
-//  const block = active ? guardBlock : air
-//  for (x = xStart; x <= xEnd; x++) {
-//    for (z = zStart; z <= zEnd; z++) {
-//      for (y = 33; y <= 34; y++) {
-//        if (x === xStart || x === xEnd || z === zStart || z === zEnd) {
-//          let blockPos = new BlockPos(x, y, z).toMCBlock()
-//          world.func_175656_a(blockPos, block.func_176223_P())
-//        }
-//      }
-//    }
-//  }
-}
-
 // Manage state for when solver is activated or inactived
 const setInactive = () => {
   isActive = false
@@ -97,7 +80,6 @@ const setInactive = () => {
   setDirection(null)
   setKeyState(KeyBindings.Sneak, false)
   setKeyState(KeyBindings.Jump, false)
-  toggleGuardBlocks(false)
   Client.getSettings().getSettings().func_151439_a(SoundCategory.MASTER, settings.volume)
 }
 
@@ -110,7 +92,6 @@ const setActive = () => {
   settings.save()
   isActive = true
   setRotation()
-  toggleGuardBlocks(true)
   doMove(0)
 }
 
