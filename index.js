@@ -195,22 +195,22 @@ function quarterWindow(t) {
 // Turn off if you move your mouse
 register("tick", () => {
   if (isActive) {
-    if (currentKeyBind == null) return
+    if (currentKeyBind != null) {
+      let segment = segments[seg]
+      let [low, high] = quarterWindow(segment.target)
+      let playerPos = segment.direction == "x" ? Player.getX() : Player.getZ()
 
-    let segment = segments[seg]
-    let [low, high] = quarterWindow(segment.target)
-    let playerPos = segment.direction == "x" ? Player.getX() : Player.getZ()
-
-    if (playerPos >= low && playerPos <= high) {
-      setKeyState(currentKeyBind, false)
-      currentKeyBind = null
-      seg = (seg + 1) % segments.length
+      if (playerPos >= low && playerPos <= high) {
+        setKeyState(currentKeyBind, false)
+        currentKeyBind = null
+        seg = (seg + 1) % segments.length
+      }
     }
-  }
 
-  if (isActive && (Player.getYaw() != 90 || Player.getPitch() != 90)) {
-    ChatLib.chat("&b&lAmbient &7» &cCancelled because you moved your mouse!")
-    setInactive()
+    if (Player.getYaw() != 90 || Player.getPitch() != 90) {
+      ChatLib.chat("&b&lAmbient &7» &cCancelled because you moved your mouse!")
+      setInactive()
+    }
   }
 })
 
