@@ -53,25 +53,19 @@ const zMin = -105, zMax = -107
 
 // starting at (-264, -108), camera yaw aligned, facing west
 const segments = [
-  { target: { x: xMin, z: zMin }, key: KeyBindings.Left },      // +Z
-  { target: { x: xMax, z: zMin }, key: KeyBindings.Backward },  // +X
-  { target: { x: xMax, z: zMax }, key: KeyBindings.Right },     // -Z
-  { target: { x: xMin, z: zMax }, key: KeyBindings.Forward },   // -X
+  { direction: "z", target: zMin, key: KeyBindings.Left },      // +Z
+  { direction: "x", target: xMax, key: KeyBindings.Backward },  // +X
+  { direction: "z", target: zMax, key: KeyBindings.Right },     // -Z
+  { direction: "x", target: xMin, key: KeyBindings.Forward },   // -X
 ]
 let seg = 0
 let currentKeyBind = null
 
-const setDirection = (() => {
-  return (newKeyBind) => {
-    if (currentKeyBind && newKeyBind !== currentKeyBind) {
-      setKeyState(currentKeyBind, false)
-    }
-    if (newKeyBind && newKeyBind !== currentKeyBind) {
-      setKeyState(newKeyBind, true)
-      currentKeyBind = newKeyBind
-    }
-  }
-})()
+function setDirection(newKeyBind) {
+  if (currentKeyBind != null) setKeyState(currentKeyBind, false)
+  if (newKeyBind != null) setKeyState(newKeyBind, true)
+  currentKeyBind = newKeyBind
+}
 
 // Set proper rotation for dance floor
 const setRotation = () => {
@@ -99,6 +93,7 @@ const toggleGuardBlocks = (active) => {
 const setInactive = () => {
   isActive = false
   beats = 0
+  seg = 0
   setDirection(null)
   setKeyState(KeyBindings.Sneak, false)
   setKeyState(KeyBindings.Jump, false)
@@ -194,22 +189,19 @@ register("renderTitle", (title, subtitle, event) => {
 })
 
 function quarterWindow(t) {
-  return t >= 0 ? [t + 0.25, t + 0.75] : [t - 0.75, t - 0.25]
+  return t >= 0 ? [t + 0, t + 1] : [t - 1, t - 0]
 }
 
 // Turn off if you move your mouse
 register("tick", () => {
   if (isActive) {
     if (currentKeyBind == null) return
-    const px = Player.getX(), pz = Player.getZ()
-    const t = segments[seg].target
-    //ChatLib.chat(px + ", " + pz + " -> " + t.x + ", " + t.z)
 
-    const [xl, xh] = quarterWindow(t.x)
-    const [zl, zh] = quarterWindow(t.z)
+    let segment = segments[seg]
+    let [low, high] = quarterWindow(segment.target)
+    let playerPos = segment.direction == "x" ? Player.getX() : Player.getZ()
 
-    if (px >= xl && px <= xh && pz >= zl && pz <= zh) {
-      ChatLib.chat("&b&lAmbient &7» &aReached corner!")
+    if (playerPos >= low && playerPos <= high) {
       setKeyState(currentKeyBind, false)
       currentKeyBind = null
       seg = (seg + 1) % segments.length
