@@ -12,10 +12,6 @@ const clickMouse = () => {
 }
 
 // Mirrorverse data
-const xStart = -266
-const xEnd = -262
-const zStart = -109
-const zEnd = -105
 const pitchList = [0.523809552192688, 1.047619104385376, 0.6984127163887024, 0.8888888955116272]
 const completePitch = 0.7460317611694336
 const jumpDelay = 500
@@ -51,45 +47,39 @@ const setKeyState = (keyBind, state) => {
   KeyBinding.func_74510_a(keyBind.func_151463_i(), state)
 }
 
-// Sets new direction and turns off previous keybind
-const setDirection = (() => {
-  let currentKeyBind = null
-  return (newKeyBind) => {
-    if (currentKeyBind != null) setKeyState(currentKeyBind, false)
-    if (newKeyBind != null) setKeyState(newKeyBind, true)
-    currentKeyBind = newKeyBind
-  }
-})()
+// corners
+const xMin = -264, xMax = -262
+const zMin = -105, zMax = -107
+
+// starting at (-264, -108), camera yaw aligned, facing west
+const segments = [
+  { direction: "z", target: zMin, key: KeyBindings.Left },      // +Z
+  { direction: "x", target: xMax, key: KeyBindings.Backward },  // +X
+  { direction: "z", target: zMax, key: KeyBindings.Right },     // -Z
+  { direction: "x", target: xMin, key: KeyBindings.Forward },   // -X
+]
+let seg = 0
+let currentKeyBind = null
+
+function setDirection(newKeyBind) {
+  if (currentKeyBind != null) setKeyState(currentKeyBind, false)
+  if (newKeyBind != null) setKeyState(newKeyBind, true)
+  currentKeyBind = newKeyBind
+}
 
 // Set proper rotation for dance floor
 const setRotation = () => {
   Player.getPlayer().func_70080_a(Player.getX(), Player.getY(), Player.getZ(), 90, 90)
 }
 
-// Set guard blocks to prevent solver from walking too far
-const toggleGuardBlocks = (active) => {
-  const world = World.getWorld()
-  const block = active ? guardBlock : air
-  for (x = xStart; x <= xEnd; x++) {
-    for (z = zStart; z <= zEnd; z++) {
-      for (y = 33; y <= 34; y++) {
-        if (x === xStart || x === xEnd || z === zStart || z === zEnd) {
-          let blockPos = new BlockPos(x, y, z).toMCBlock()
-          world.func_175656_a(blockPos, block.func_176223_P())
-        }
-      }
-    }
-  }
-}
-
 // Manage state for when solver is activated or inactived
 const setInactive = () => {
   isActive = false
   beats = 0
+  seg = 0
   setDirection(null)
   setKeyState(KeyBindings.Sneak, false)
   setKeyState(KeyBindings.Jump, false)
-  toggleGuardBlocks(false)
   Client.getSettings().getSettings().func_151439_a(SoundCategory.MASTER, settings.volume)
 }
 
@@ -102,7 +92,6 @@ const setActive = () => {
   settings.save()
   isActive = true
   setRotation()
-  toggleGuardBlocks(true)
   doMove(0)
 }
 
@@ -112,9 +101,8 @@ const doMove = (beat) => {
 
   if (beat == 0 || beat % 2 == 1) {
     status.push("moving")
-    const index = Math.ceil(beat / 2) % 4
-    const cycle = [KeyBindings.Left, KeyBindings.Backward, KeyBindings.Right, KeyBindings.Forward]
-    setDirection(cycle[index])
+    const { key } = segments[seg]
+    setDirection(key)
   }
 
   if (beat >= 8) {
@@ -181,11 +169,29 @@ register("renderTitle", (title, subtitle, event) => {
   }
 })
 
+function quarterWindow(t) {
+  return t >= 0 ? [t + 0, t + 1] : [t - 1, t - 0]
+}
+
 // Turn off if you move your mouse
 register("tick", () => {
-  if (isActive && (Player.getYaw() != 90 || Player.getPitch() != 90)) {
-    ChatLib.chat("&b&lAmbient &7» &cCancelled because you moved your mouse!")
-    setInactive()
+  if (isActive) {
+    if (currentKeyBind != null) {
+      let segment = segments[seg]
+      let [low, high] = quarterWindow(segment.target)
+      let playerPos = segment.direction == "x" ? Player.getX() : Player.getZ()
+
+      if (playerPos >= low && playerPos <= high) {
+        setKeyState(currentKeyBind, false)
+        currentKeyBind = null
+        seg = (seg + 1) % segments.length
+      }
+    }
+
+    if (Player.getYaw() != 90 || Player.getPitch() != 90) {
+      ChatLib.chat("&b&lAmbient &7» &cCancelled because you moved your mouse!")
+      setInactive()
+    }
   }
 })
 
