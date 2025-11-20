@@ -2,7 +2,7 @@
   "name": "DanceRoomSolver",
   "description": "Does the Dance Room in the Mirrorverse in Hypixel Skyblock for you.",
   "creator": "appable",
-  "version": "1.1",
+  "version": "1.2",
   "entry": "index.js",
   "requires": [
     "PogData"
